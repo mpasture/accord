@@ -39,9 +39,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import org.bouncycastle.asn1.cms.KeyTransRecipientInfo;
-import org.bouncycastle.asn1.cms.SignerIdentifier;
-import org.bouncycastle.asn1.x500.X500Name;
 
 import org.bouncycastle.cms.CMSCompressedDataGenerator;
 import org.bouncycastle.cms.CMSCompressedDataParser;
@@ -63,10 +60,8 @@ import org.bouncycastle.cms.RecipientId;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.RecipientInformationStore;
 import org.bouncycastle.cms.SignerId;
-import org.bouncycastle.cms.SignerInfoGenerator;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
-import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
 import org.neociclo.odetteftp.protocol.v20.CipherSuite;
 import org.neociclo.odetteftp.protocol.v20.DefaultSignedDeliveryNotification;
 import org.neociclo.odetteftp.protocol.v20.SignedDeliveryNotification;
@@ -169,9 +164,10 @@ public class EnvelopingUtil {
         // algorithms
 
         // look for our recipient identifier
-        RecipientId recId = new org.bouncycastle.cms.KeyTransRecipientId( 
-                new X500Name(cert.getIssuerX500Principal().getName()),
-                cert.getSerialNumber());
+        RecipientId recId = new RecipientId();
+
+        recId.setSerialNumber(cert.getSerialNumber());
+        recId.setIssuer(cert.getIssuerX500Principal().getEncoded());
 
         RecipientInformationStore recipients = ep.getRecipientInfos();
         RecipientInformation recipient = recipients.get(recId);
@@ -236,9 +232,9 @@ public class EnvelopingUtil {
 
 					// lookup signer by matching with the given certificate
 
-					SignerId sigId = new SignerId( 
-                                                new X500Name(checkCert.getIssuerX500Principal().getName()),
-                                                checkCert.getSerialNumber());
+					SignerId sigId = new SignerId();
+			        sigId.setSerialNumber(checkCert.getSerialNumber());
+			        sigId.setIssuer(checkCert.getIssuerX500Principal().getEncoded());
 
 			        SignerInformation signer = signers.get(sigId);
 
@@ -477,9 +473,10 @@ public class EnvelopingUtil {
         // algorithms
 
         // look for our recipient identifier
-        RecipientId recId = new org.bouncycastle.cms.KeyTransRecipientId( 
-                new X500Name(cert.getIssuerX500Principal().getName()),
-                cert.getSerialNumber());
+        RecipientId recId = new RecipientId();
+
+        recId.setSerialNumber(cert.getSerialNumber());
+        recId.setIssuer(cert.getIssuerX500Principal().getEncoded());
 
         RecipientInformationStore recipients = enveloped.getRecipientInfos();
         RecipientInformation recipient = recipients.get(recId);
@@ -505,9 +502,10 @@ public class EnvelopingUtil {
         // algorithms
 
         // look for our recipient identifier
-        RecipientId recId = new org.bouncycastle.cms.KeyTransRecipientId( 
-                new X500Name(cert.getIssuerX500Principal().getName()),
-                cert.getSerialNumber());
+        RecipientId recId = new RecipientId();
+
+        recId.setSerialNumber(cert.getSerialNumber());
+        recId.setIssuer(cert.getIssuerX500Principal().getEncoded());
 
         RecipientInformationStore recipients = parser.getRecipientInfos();
         RecipientInformation recipient = recipients.get(recId);

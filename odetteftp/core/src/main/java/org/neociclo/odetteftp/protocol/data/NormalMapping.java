@@ -31,6 +31,7 @@ import org.neociclo.odetteftp.protocol.RecordFormat;
 import org.neociclo.odetteftp.protocol.VirtualFileMappingException;
 import org.neociclo.odetteftp.protocol.DataExchangeBuffer.SubrecordHeader;
 import org.neociclo.odetteftp.protocol.DataExchangeBuffer.SubrecordHeaderIterator;
+import org.neociclo.odetteftp.util.BufferUtil;
 import org.neociclo.odetteftp.util.ByteBufferFactory;
 import org.neociclo.odetteftp.util.ProtocolUtil;
 
@@ -67,7 +68,7 @@ public class NormalMapping extends AbstractMapping {
          * Exchange Buffer subrecords.
          */
         int freeSpace;
-        ByteBuffer buffer = ByteBufferFactory.allocate(MAX_SUBRECORD_LENGTH);
+        ByteBuffer buffer = ByteBufferFactory.allocate(virtualFile.getRecordFormat() == TEXTFILE ? MAX_SUBRECORD_LENGTH + 1: MAX_SUBRECORD_LENGTH);
         byte[] subrecord = null;
         while ((freeSpace = deb.availableBytes()) > 0) {
 
@@ -76,6 +77,7 @@ public class NormalMapping extends AbstractMapping {
             long entryPosition = position(in);
             int bytesRead = read(in, buffer);
 
+            
             // reached the end of stream
             if (bytesRead == -1) {
                 eof = true;
@@ -83,7 +85,17 @@ public class NormalMapping extends AbstractMapping {
             }
 
             int subrecordSize = Math.min(Math.min(bytesRead, MAX_SUBRECORD_LENGTH), freeSpace - 1);
-            if (recordFormat == FIXED) {
+
+            // on TEXTFILE convert lineSeparator when to set the endOfRecord flag
+            if (recordFormat == TEXTFILE) {
+                int countPos = BufferUtil.seekWithinBuffer(LINE_SEPARATOR, buffer, subrecordSize);
+                if (countPos > 0) {
+                    subrecordSize = countPos;
+                    endOfRecord = true;
+                }
+            }
+            // determine end of record 
+            else if (recordFormat != RecordFormat.UNSTRUCTURED && entryPosition > 0) {
                 long currentOffset = ProtocolUtil.computeVirtualFileOffset(entryPosition, virtualFile.getRecordFormat(), virtualFile.getRecordSize());
                 long recordLimit = virtualFile.getRecordSize() * (currentOffset + 1);
 
@@ -102,7 +114,7 @@ public class NormalMapping extends AbstractMapping {
             }
             buffer.get(subrecord);
 
-            if ((entryPosition + bytesRead) >= fileSize) {
+            if (bytesRead < buffer.capacity() || ((entryPosition + bytesRead) >= fileSize)) {
                 eof = true;
             }
 
@@ -112,7 +124,21 @@ public class NormalMapping extends AbstractMapping {
                 eof = false;
             }
 
-            if(eof) {
+            /*
+             * When line separator is found and handled above, skip the line
+             * separator length octets on reading record. Thus it will rewind
+             * the remaining bytes left and re-read the record and continue the
+             * loop while (until DEB is full or End Of Stream is reached).
+             */
+            if (recordFormat == TEXTFILE && endOfRecord) {
+                skip(in, LINE_SEPARATOR.length);
+            }
+
+            /*
+             * Unstructured files are transmitted as a single record; in this
+             * case, the flag acts as an end-of-file marker.
+             */
+            if ((recordFormat == RecordFormat.UNSTRUCTURED || recordFormat == FIXED) && eof) {
                 endOfRecord = true;
             }
 
@@ -165,10 +191,10 @@ public class NormalMapping extends AbstractMapping {
                  * Handle the endOfRecord flag when Virtual File is TEXTFILE format
                  * to add line separator at the end of each line/record.
                  */
-        //        if (header.isEndOfRecord() && virtualFile.getRecordFormat() == TEXTFILE) {
-        //            out.write(ByteBuffer.wrap(LINE_SEPARATOR));
-        //            bytesWritten += LINE_SEPARATOR.length;
-        //        }
+                if (header.isEndOfRecord() && virtualFile.getRecordFormat() == TEXTFILE) {
+                    out.write(ByteBuffer.wrap(LINE_SEPARATOR));
+                    bytesWritten += LINE_SEPARATOR.length;
+                }
     
             }
     

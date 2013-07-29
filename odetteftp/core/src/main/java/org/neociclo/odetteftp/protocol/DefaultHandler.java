@@ -761,13 +761,13 @@ public abstract class DefaultHandler implements ProtocolHandler {
          */
         while (session.getOutgoingCredits() > 0) {
 
-            // Consume window credits in the Oftp session
-            consumeOutgoingCredits(session);
-
             /* Read data buffer from the stream. */
             boolean endOfStream = mapping.readData(virtualFile, fileChannel, dataBuffer);
 
             if (dataBuffer.getUnitCount() > 0 ) {
+                // Consume window credits in the Oftp session
+                consumeOutgoingCredits(session);
+                
 	            final long overallSentBytes = session.getOutgoingBytesTransfered() + dataBuffer.getUnitCount();
 	
 	            // Update the Oftplet on each data transmission (total bytes sent)
