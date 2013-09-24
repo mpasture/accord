@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -86,7 +87,7 @@ public class TcpServer extends Server {
     }
 
     @Override
-    protected OdetteFtpPipelineFactory getPipelineFactory(OftpletFactory oftpletFactory, Timer timer,
+    protected ChannelPipelineFactory getPipelineFactory(OftpletFactory oftpletFactory, Timer timer,
             ChannelGroup channelGroup) {
 
     	SslHandlerFactory sslHandlerFactory = new SslHandlerFactory() {
