@@ -78,6 +78,8 @@ import org.neociclo.odetteftp.oftplet.StartFileResponse;
 import org.neociclo.odetteftp.protocol.DeliveryNotification.EndResponseType;
 import org.neociclo.odetteftp.protocol.data.AbstractMapping;
 import org.neociclo.odetteftp.protocol.v13.ReleaseFormatVer13;
+import org.neociclo.odetteftp.protocol.v20.EnvelopedVirtualFile;
+import org.neociclo.odetteftp.protocol.v20.SecurityLevel;
 import org.neociclo.odetteftp.security.PasswordAuthenticationCallback;
 import org.neociclo.odetteftp.security.PasswordCallback;
 import org.neociclo.odetteftp.security.SecurityContext;
@@ -410,8 +412,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
         closeIoChannelOnEndFileAnswer(fileChannel, "EFID", virtualFile, session);
 
         // calculate the Virtual File record/block count based on recordFormat and recordSize
-        long fileRecordCount = computeVirtualFileRecordCount(fileUnitCount, virtualFile.getRecordFormat(), virtualFile
-                .getRecordSize());
+        long fileRecordCount = computeVirtualFileRecordCount(virtualFile, fileUnitCount);
 
         RecordFormat fileFormat = virtualFile.getRecordFormat();
 
@@ -807,8 +808,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
         long unitCount = session.getOutgoingBytesTransfered();
 //        long unitCount = virtualFile.getFile().length();
 
-        long recordCount = computeVirtualFileRecordCount(unitCount, virtualFile.getRecordFormat(), virtualFile
-                .getRecordSize());
+        long recordCount = computeVirtualFileRecordCount(virtualFile, unitCount);
 
         /* Construct and send the End File indication command. */
         CommandExchangeBuffer efid = buildEndFileCommand(recordCount, unitCount);

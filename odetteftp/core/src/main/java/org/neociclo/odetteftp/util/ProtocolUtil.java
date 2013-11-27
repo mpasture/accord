@@ -29,6 +29,9 @@ import java.util.Date;
 import org.neociclo.odetteftp.EntityState;
 import org.neociclo.odetteftp.EntityType;
 import org.neociclo.odetteftp.protocol.RecordFormat;
+import org.neociclo.odetteftp.protocol.VirtualFile;
+import org.neociclo.odetteftp.protocol.v20.EnvelopedVirtualFile;
+import org.neociclo.odetteftp.protocol.v20.SecurityLevel;
 
 /**
  * @author Rafael Marins
@@ -172,15 +175,20 @@ public class ProtocolUtil {
         return fileSize;
     }
 
-    public static long computeVirtualFileRecordCount(long unitCount, RecordFormat recordFormat, int recordSize) {
-
+    public static long computeVirtualFileRecordCount(VirtualFile virtualFile, long unitCount) {
         /*
          * Calculate Virtual File record count to submit end file. If record
          * format is UNSTRUCTURED or TEXTFILE force it to 0 (zero).
+         * If file in encrypted or signed, force it to 0 as well
+         * see http://tools.ietf.org/html/rfc5024#section-5.3.3
          */
         long recordCount = 0;
 
-        if ((recordFormat == RecordFormat.FIXED) || (recordFormat == RecordFormat.VARIABLE)) {
+
+    	RecordFormat recordFormat = virtualFile.getRecordFormat();
+    	int recordSize = virtualFile.getRecordSize();
+        if (((recordFormat == RecordFormat.FIXED) || (recordFormat == RecordFormat.VARIABLE))	
+        		&& (!(virtualFile instanceof EnvelopedVirtualFile) || ((EnvelopedVirtualFile)virtualFile).getSecurityLevel() == SecurityLevel.NO_SECURITY_SERVICES)) {
 
             long octets = unitCount;
 
