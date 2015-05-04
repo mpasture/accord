@@ -58,6 +58,7 @@ import org.jboss.netty.handler.timeout.IdleStateHandler;
 import org.jboss.netty.handler.timeout.ReadTimeoutHandler;
 import org.jboss.netty.util.Timer;
 import org.neociclo.odetteftp.EntityType;
+import org.neociclo.odetteftp.OdetteFtpException;
 import org.neociclo.odetteftp.OdetteFtpSession;
 import org.neociclo.odetteftp.OdetteFtpVersion;
 import org.neociclo.odetteftp.ProtocolHandler;
@@ -72,6 +73,8 @@ import org.neociclo.odetteftp.protocol.DataExchangeBuffer;
 import org.neociclo.odetteftp.protocol.EndSessionReason;
 import org.neociclo.odetteftp.protocol.OdetteFtpExchangeBuffer;
 import org.neociclo.odetteftp.util.OdetteFtpConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@link Timer} which was specified when the {@link ReadTimeoutHandler} is
@@ -82,6 +85,7 @@ import org.neociclo.odetteftp.util.OdetteFtpConstants;
  */
 @Sharable
 public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
+	private static final Logger LOGGER = LoggerFactory.getLogger(OdetteFtpChannelHandler.class);
 
     /**
      * Implement interface to provide in OdetteFtpSession to allow writing
@@ -381,11 +385,7 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 
     @Override
     public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-
-        OdetteFtpSession session = ChannelContext.SESSION.remove(ctx.getChannel());
-
-        Oftplet oftplet = getSessionOftplet(session);
-        oftplet.destroy();
+    	LOGGER.debug("Channel disconnected " + e.getState());
 
         super.channelDisconnected(ctx, e);
     }
@@ -396,12 +396,36 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+		LOGGER.debug("Channel exception " + e.getCause().getClass().getName());
+		
 		OdetteFtpSession session = ChannelContext.SESSION.get(ctx.getChannel());
 		if (session != null) {
 			Oftplet oftplet = getSessionOftplet(session);
 			oftplet.onExceptionCaught(e.getCause());
+			if (e.getCause() instanceof OdetteFtpException) {
+				session.close();
+			} else {
+				session.closeImmediately();
+			}
 		} else {
 			// channel already disconnected
 		}
 	}
+	
+	@Override
+    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+		LOGGER.debug("Channel closed");
+		OdetteFtpSession session = ChannelContext.SESSION.remove(ctx.getChannel());
+
+		if (session != null) {
+			Oftplet oftplet = getSessionOftplet(session);
+			oftplet.destroy();
+			session.close();
+		} else {
+			// channel already disconnected
+		}
+
+        super.channelClosed(ctx, e);
+    }
+
 }
