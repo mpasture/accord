@@ -369,63 +369,68 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
      * This method is called whenever the communication data flow is idle and
      * the session timeout limit is over.
      */
-    @Override
-    public void channelIdle(ChannelHandlerContext ctx, IdleStateEvent e) throws Exception {
-        OdetteFtpSession session = ChannelContext.SESSION.get(ctx.getChannel());
+	@Override
+	public void channelIdle(ChannelHandlerContext ctx, IdleStateEvent e) throws Exception {
+		LOGGER.warn("Channel idle : timeout");
+		OdetteFtpSession session = ChannelContext.SESSION.get(ctx.getChannel());
 
-        // session is terminated by timeout
-        OdetteFtpVersion version = session.getVersion();
-        ProtocolHandler handler = getProtocolHandlerByVersion(version);
+		// session is terminated by timeout
+		OdetteFtpVersion version = session.getVersion();
+		ProtocolHandler handler = getProtocolHandlerByVersion(version);
 
-        // TODO perhaps we may specify the timeout period in release message
-        handler.abort(session, EndSessionReason.TIME_OUT, null);
+		// TODO perhaps we may specify the timeout period in release message
+		handler.abort(session, EndSessionReason.TIME_OUT, null);
 
-        super.channelIdle(ctx, e);
-    }
+		super.channelIdle(ctx, e);
+	}
 
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    	LOGGER.debug("Channel disconnected " + e.getState());
+	@Override
+	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+		LOGGER.debug("Channel closed");
+		closeSession(ctx, "Channel closed");
+		super.channelClosed(ctx, e);
+	}
 
-        super.channelDisconnected(ctx, e);
-    }
 
-    public OftpletFactory getOftpletFactory() {
-        return oftpletFactory;
-    }
+	@Override
+	public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+		LOGGER.debug("Channel disconnected");
+		closeSession(ctx, "Channel disconnected");
+		super.channelDisconnected(ctx, e);
+	}
+	
+	private void closeSession(ChannelHandlerContext ctx, String location) {
+		try {
+			OdetteFtpSession session = ChannelContext.SESSION.remove(ctx.getChannel());
+			if (session != null) {
+				Oftplet oftplet = getSessionOftplet(session);
+				oftplet.destroy();
+				session.close();
+			} else {
+				LOGGER.debug("session already closed in " + location);
+			}
+		} catch (Exception e1) {
+			LOGGER.error("Exception during session closed", e1);
+		}
+	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-		LOGGER.debug("Channel exception " + e.getCause().getClass().getName());
-		
-		OdetteFtpSession session = ChannelContext.SESSION.get(ctx.getChannel());
-		if (session != null) {
-			Oftplet oftplet = getSessionOftplet(session);
-			oftplet.onExceptionCaught(e.getCause());
-			if (e.getCause() instanceof OdetteFtpException) {
-				session.close();
-			} else {
-				session.closeImmediately();
+		LOGGER.warn("Exception Caught");
+		try {
+			OdetteFtpSession session = ChannelContext.SESSION.get(ctx.getChannel());
+			if (session != null) {
+				Oftplet oftplet = getSessionOftplet(session);
+				oftplet.onExceptionCaught(e.getCause());
 			}
-		} else {
-			// channel already disconnected
+		} catch (Exception e1) {
+			LOGGER.error("Exception during exception handling", e1);
 		}
+		ctx.sendUpstream(e);
 	}
 	
-	@Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-		LOGGER.debug("Channel closed");
-		OdetteFtpSession session = ChannelContext.SESSION.remove(ctx.getChannel());
-
-		if (session != null) {
-			Oftplet oftplet = getSessionOftplet(session);
-			oftplet.destroy();
-			session.close();
-		} else {
-			// channel already disconnected
-		}
-
-        super.channelClosed(ctx, e);
-    }
+	private OftpletFactory getOftpletFactory() {
+		return oftpletFactory;
+	}
 
 }
