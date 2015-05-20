@@ -202,7 +202,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
             String resNotAvailableErr = "File Receive failed. Oftplet did not provided a Listener.";
             LOGGER.error("[{}] SFID received. {} Oftplet: {}", new Object[] {session, resNotAvailableErr, oftplet});
 
-            abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAIABLE, resNotAvailableErr);
+            abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAILABLE, resNotAvailableErr);
 
         }
 
@@ -656,7 +656,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
 			oftpletSpeaker.onSendFileError(normalizedVirtualFile, new AnswerReasonInfo(
 					AnswerReason.ACCESS_METHOD_FAILURE, fileNotFoundText), true);
 
-            abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAIABLE, fileNotFoundText);
+            abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAILABLE, fileNotFoundText);
         }
 
         // Position file at the proper restart offset
@@ -684,7 +684,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
 					oftpletSpeaker.onSendFileError(normalizedVirtualFile, new AnswerReasonInfo(
 							AnswerReason.ACCESS_METHOD_FAILURE, restartFailedText), true);
     
-                    abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAIABLE, restartFailedText);
+                    abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAILABLE, restartFailedText);
     
                 }
             }
@@ -1009,20 +1009,21 @@ public abstract class DefaultHandler implements ProtocolHandler {
         LOGGER.debug("[{}] ESID received. Invoking method onSessionEnd() on the Oftplet object: {}", session, oftplet);
         oftplet.onSessionEnd();
 
-        // close communication channel on flush
-        session.closeImmediately();
-
         EndSessionReasonInfo reasonInfo = buildEndSessionReasonInfoObject(esid);
 
         /* Raise exception when it's not normal termination. */
         EndSessionReason reason = reasonInfo.getEndSessionReason();
         if (reason != EndSessionReason.NORMAL_TERMINATION) {
+        	// exceptionHandler will close the session after handling exception
             String reasonText = reasonInfo.getReasonText();
             if (reasonText == null) {
-                reasonText = "Abnormal session end received: " + reason.name();
+				reasonText = "Abnormal session end received: " + reason.name() + (reason.getDescription() != null ? " (" + reason.getDescription() + ")" : "");
             }
             throw new EndSessionException(reason, reasonText);
-        }
+		} else {
+			//close the session immediately
+			session.close();
+		}
 
     }
 
@@ -1307,7 +1308,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
         PasswordAuthenticationCallback pwdAuthCallback = new PasswordAuthenticationCallback(ssidcode, ssidpswd);
         if (!handleCallback(session, pwdAuthCallback) && mandatory) {
             // already did logging within handleCallback() method
-            abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAIABLE,
+            abnormalRelease(session, EndSessionReason.RESOURCES_NOT_AVAILABLE,
                     "Password authentication engine not available.");
         }
 

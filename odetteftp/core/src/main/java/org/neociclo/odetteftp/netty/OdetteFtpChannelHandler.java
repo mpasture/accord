@@ -174,7 +174,7 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 
     @Override
     public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-
+    	LOGGER.debug("Channel open");
         OdetteFtpSession session = new OdetteFtpSession(entityType);
         ChannelContext.SESSION.set(e.getChannel(), session);
 
@@ -205,7 +205,7 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-
+    	LOGGER.debug("Channel connected");
         OdetteFtpSession session = ChannelContext.SESSION.get(ctx.getChannel());
 
         /* Get handler implementation for the correct protocol version. */
@@ -387,19 +387,6 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 	@Override
 	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
 		LOGGER.debug("Channel closed");
-		closeSession(ctx, "Channel closed");
-		super.channelClosed(ctx, e);
-	}
-
-
-	@Override
-	public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-		LOGGER.debug("Channel disconnected");
-		closeSession(ctx, "Channel disconnected");
-		super.channelDisconnected(ctx, e);
-	}
-	
-	private void closeSession(ChannelHandlerContext ctx, String location) {
 		try {
 			OdetteFtpSession session = ChannelContext.SESSION.remove(ctx.getChannel());
 			if (session != null) {
@@ -407,12 +394,21 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 				oftplet.destroy();
 				session.close();
 			} else {
-				LOGGER.debug("session already closed in " + location);
+				LOGGER.debug("session already closed ");
 			}
 		} catch (Exception e1) {
 			LOGGER.error("Exception during session closed", e1);
 		}
+		super.channelClosed(ctx, e);
 	}
+
+
+	@Override
+	public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+		LOGGER.debug("Channel disconnected");
+		super.channelDisconnected(ctx, e);
+	}
+	
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
@@ -422,6 +418,11 @@ public class OdetteFtpChannelHandler extends IdleStateAwareChannelHandler {
 			if (session != null) {
 				Oftplet oftplet = getSessionOftplet(session);
 				oftplet.onExceptionCaught(e.getCause());
+				if (e.getCause() instanceof OdetteFtpException) {
+					session.close();
+				} else {
+					session.closeImmediately();
+				}
 			}
 		} catch (Exception e1) {
 			LOGGER.error("Exception during exception handling", e1);

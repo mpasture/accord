@@ -21,8 +21,9 @@ import static org.neociclo.odetteftp.protocol.CommandExchangeBuffer.formatAttrib
 import static org.neociclo.odetteftp.protocol.v20.CommandBuilderVer20.formatDate;
 import static org.neociclo.odetteftp.protocol.v20.CommandBuilderVer20.formatTime;
 import static org.neociclo.odetteftp.protocol.v20.ReleaseFormatVer20.EERP_V20;
-import static org.neociclo.odetteftp.util.SecurityUtil.*;
 import static org.neociclo.odetteftp.util.ProtocolUtil.padd;
+import static org.neociclo.odetteftp.util.SecurityUtil.BC_PROVIDER;
+import static org.neociclo.odetteftp.util.SecurityUtil.installBouncyCastleProviderIfNecessary;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,7 +47,6 @@ import java.util.List;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cms.CMSAlgorithm;
 import org.bouncycastle.cms.CMSCompressedDataParser;
 import org.bouncycastle.cms.CMSCompressedDataStreamGenerator;
@@ -63,25 +63,22 @@ import org.bouncycastle.cms.CMSSignedDataParser;
 import org.bouncycastle.cms.CMSSignedDataStreamGenerator;
 import org.bouncycastle.cms.CMSSignedGenerator;
 import org.bouncycastle.cms.CMSTypedData;
-import org.bouncycastle.cms.DefaultCMSSignatureAlgorithmNameGenerator;
 import org.bouncycastle.cms.RecipientId;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.RecipientInformationStore;
 import org.bouncycastle.cms.SignerId;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.SignerInformationStore;
-import org.bouncycastle.cms.bc.BcRSASignerInfoVerifierBuilder;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoVerifierBuilder;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
 import org.bouncycastle.cms.jcajce.ZlibCompressor;
 import org.bouncycastle.cms.jcajce.ZlibExpanderProvider;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
@@ -274,13 +271,9 @@ public class EnvelopingUtil {
 						// verify that the signature is correct and that it was generated
 						// when the certificate was current
 						//
-			            if (signer.verify(
-			                    new BcRSASignerInfoVerifierBuilder(
-			                            new DefaultCMSSignatureAlgorithmNameGenerator(),
-			                            new DefaultSignatureAlgorithmIdentifierFinder(),
-			                            new DefaultDigestAlgorithmIdentifierFinder(), 
-			                            new BcDigestCalculatorProvider())
-			                    .build(new JcaX509CertificateHolder(checkCert)))) {
+			        	JcaDigestCalculatorProviderBuilder calculatorProviderBuilder = new JcaDigestCalculatorProviderBuilder().setProvider(BouncyCastleProvider.PROVIDER_NAME);
+			        	JcaSignerInfoVerifierBuilder jcaSignerInfoVerifierBuilder = new JcaSignerInfoVerifierBuilder(calculatorProviderBuilder.build()).setProvider(BouncyCastleProvider.PROVIDER_NAME);
+			            if (signer.verify(jcaSignerInfoVerifierBuilder.build(checkCert))) {
 							// signature verified
 							if (checkResult != null) {
 								checkResult.setSuccess();

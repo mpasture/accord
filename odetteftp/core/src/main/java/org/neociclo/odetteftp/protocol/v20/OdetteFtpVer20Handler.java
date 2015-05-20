@@ -21,7 +21,7 @@ import static org.neociclo.odetteftp.protocol.CommandBuilder.readyToReceive;
 import static org.neociclo.odetteftp.protocol.EndSessionReason.INCOMPATIBLE_SECURE_AUTHENTICATION;
 import static org.neociclo.odetteftp.protocol.EndSessionReason.INVALID_CHALLENGE_RESPONSE;
 import static org.neociclo.odetteftp.protocol.EndSessionReason.PROTOCOL_VIOLATION;
-import static org.neociclo.odetteftp.protocol.EndSessionReason.RESOURCES_NOT_AVAIABLE;
+import static org.neociclo.odetteftp.protocol.EndSessionReason.RESOURCES_NOT_AVAILABLE;
 import static org.neociclo.odetteftp.protocol.v13.CommandBuilderVer13.endFilePositiveAnswer;
 import static org.neociclo.odetteftp.protocol.v20.CipherSuite.NO_CIPHER_SUITE_SELECTION;
 import static org.neociclo.odetteftp.protocol.v20.CommandBuilderVer20.authenticationChallenge;
@@ -210,7 +210,7 @@ public class OdetteFtpVer20Handler extends OdetteFtpVer14Handler {
 
         if (!handleCallback(session, encryptChallengeCallback)) {
             // already did logging within handleCallback() method
-            abnormalRelease(session, RESOURCES_NOT_AVAIABLE,
+            abnormalRelease(session, RESOURCES_NOT_AVAILABLE,
                     "Authentication Challenge encryption/enveloping failed. Engine is not available.");
             return;
         }
@@ -220,7 +220,7 @@ public class OdetteFtpVer20Handler extends OdetteFtpVer14Handler {
         if (encodedChallenge == null || encodedChallenge.length == 0) {
             String nullEncodedChallenge = "Callback returned null/empty encoded challenge.";
             LOGGER.error("[{}] SECD received. Secure Authentication failed. {}", session, nullEncodedChallenge);
-            abnormalRelease(session, RESOURCES_NOT_AVAIABLE, nullEncodedChallenge);
+            abnormalRelease(session, RESOURCES_NOT_AVAILABLE, nullEncodedChallenge);
             return;
         }
 
@@ -239,7 +239,7 @@ public class OdetteFtpVer20Handler extends OdetteFtpVer14Handler {
 
         if (!handleCallback(session, challengeCallback)) {
             // already did logging within handleCallback() method
-            abnormalRelease(session, RESOURCES_NOT_AVAIABLE,
+            abnormalRelease(session, RESOURCES_NOT_AVAILABLE,
                     "Authentication Challenge decryption/unenveloping failed. Engine is not available.");
             return;
         }
@@ -249,7 +249,7 @@ public class OdetteFtpVer20Handler extends OdetteFtpVer14Handler {
         if (challengeResponse == null || challengeResponse.length == 0) {
             String nullChallengeResponse = "Callback returned null Challenge response.";
             LOGGER.error("[{}] AUCH received. Secure Authentication failed. {}", session, nullChallengeResponse);
-            abnormalRelease(session, RESOURCES_NOT_AVAIABLE, nullChallengeResponse);
+            abnormalRelease(session, RESOURCES_NOT_AVAILABLE, nullChallengeResponse);
             return;
         }
 

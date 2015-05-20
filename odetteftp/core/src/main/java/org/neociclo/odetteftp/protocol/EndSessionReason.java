@@ -125,12 +125,12 @@ public enum EndSessionReason {
     PROTOCOL_VIOLATION(2),
 
     /**
-     * Resources not avaiable.
+     * Resources not available.
      * <p>
      * The request for connection has been denied due to a resource shortage.
      * The connection attempt should be retried later.
      */
-    RESOURCES_NOT_AVAIABLE(8),
+    RESOURCES_NOT_AVAILABLE(8),
 
     /**
      * Time out.
