@@ -786,6 +786,7 @@ public abstract class DefaultHandler implements ProtocolHandler {
 	             * context.
 	             */
 	            session.setOutgoingBytesTransfered(overallSentBytes);
+	            dataBuffer.clear();
             }
 
             /*

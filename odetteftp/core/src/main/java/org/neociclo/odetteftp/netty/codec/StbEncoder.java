@@ -39,12 +39,15 @@ public class StbEncoder extends OneToOneEncoder {
 
         ChannelBuffer header = channel.getConfig().getBufferFactory().getBuffer(ByteOrder.BIG_ENDIAN, STB_HEADER_SIZE);
         ChannelBuffer body = (ChannelBuffer) msg;
+		if (body.readableBytes() == 0) {
+			return wrappedBuffer(body);
+		} else {
+			int length = STB_HEADER_SIZE + body.readableBytes();
+			header.writeByte(STB_V1_NOFLAGS_HEADER);
+			header.writeMedium(length);
 
-        int length = STB_HEADER_SIZE + body.readableBytes();
-        header.writeByte(STB_V1_NOFLAGS_HEADER);
-        header.writeMedium(length);
-
-        return wrappedBuffer(header, body);
-    }
+			return wrappedBuffer(header, body);
+		}
+	}
 
 }
