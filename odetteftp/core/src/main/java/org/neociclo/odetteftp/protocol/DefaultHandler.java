@@ -446,21 +446,19 @@ public abstract class DefaultHandler implements ProtocolHandler {
         }
 
         /* Unit Count validating. */
-        if (unitCount != fileUnitCount) {
+        //With TEXTFILE record format we sometime have an extra character. We accept it as well... 
+        if (unitCount != fileUnitCount && (fileFormat != RecordFormat.TEXTFILE || unitCount +1 != fileUnitCount)) {
 
-            LOGGER.warn("[{}] EFID received. Invalid byte count (received file unitCount={}) on virtual file:",
-                    new Object[] {session, fileUnitCount, virtualFile});
+        	LOGGER.warn("[{}] EFID received. Invalid byte count (received file unitCount={}) on virtual file:", new Object[] { session, fileUnitCount, virtualFile });
 
-            String invalidByteCountText = "Invalid unit count. Received file unit count is: " + fileUnitCount;
+			String invalidByteCountText = "Invalid unit count. Received file unit count is: " + fileUnitCount;
 
-            CommandExchangeBuffer invalidRecordCount = buildEndFileNegativeAnswerCommand(INVALID_BYTE_COUNT,
-                    invalidByteCountText);
-            session.write(invalidRecordCount);
+			CommandExchangeBuffer invalidRecordCount = buildEndFileNegativeAnswerCommand(INVALID_BYTE_COUNT, invalidByteCountText);
+			session.write(invalidRecordCount);
 
-            oftpletListener.onReceiveFileError(virtualFile, new AnswerReasonInfo(AnswerReason.INVALID_BYTE_COUNT,
-                    invalidByteCountText));
+			oftpletListener.onReceiveFileError(virtualFile, new AnswerReasonInfo(AnswerReason.INVALID_BYTE_COUNT, invalidByteCountText));
 
-            return;
+			return;
         }
 
         /*
