@@ -33,6 +33,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,6 +41,9 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -244,5 +248,30 @@ public class SecurityUtil {
 
         return hash.digest();
     }
+    
+	public static void hardenSSLEngine(SSLContext sslContext, SSLEngine engine) {
+		String[] protocols = sslContext.getSupportedSSLParameters().getProtocols();
+		List<String> newProtocolList = new ArrayList<String>();
+		for (String protocol : protocols) {
+		    if( protocol.equalsIgnoreCase("TLSv1.1") || protocol.equalsIgnoreCase("TLSv1.2")){
+		        newProtocolList.add( protocol );
+		    }
+		}
+		String[] newProtocolArray = newProtocolList.toArray(new String[newProtocolList.size()]); 
+		engine.setEnabledProtocols(newProtocolArray);
+		
+		String[] unwantedCipherSuites = new String[] {"_dhe_", "_dh_anon", "_des", "_40", "_56", "_null_md5", "_null_sha" };
+		String[] ciphers = sslContext.getSupportedSSLParameters().getCipherSuites();
+		List<String> newCiphersList = new ArrayList<String>();
+		for (String cipher : ciphers) {
+			for (String ucs : unwantedCipherSuites) {
+				if (!cipher.toLowerCase().contains(ucs)) {
+					newCiphersList.add(cipher);
+				}
+			}
+		}
+		String[] newCipherArray = newCiphersList.toArray(new String[newCiphersList.size()]); 
+		engine.setEnabledCipherSuites(newCipherArray);
+	}
 
 }

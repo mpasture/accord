@@ -36,6 +36,7 @@ import org.neociclo.odetteftp.netty.OdetteFtpPipelineFactory;
 import org.neociclo.odetteftp.netty.SslHandlerFactory;
 import org.neociclo.odetteftp.oftplet.OftpletFactory;
 import org.neociclo.odetteftp.util.ExecutorUtil;
+import org.neociclo.odetteftp.util.SecurityUtil;
 
 /**
  * @author Rafael Marins
@@ -111,21 +112,7 @@ public class TcpClient extends Client {
 		        	SSLEngine engine = sslContext.createSSLEngine();
 		    		engine.setUseClientMode(true);
 		    		engine.setEnableSessionCreation(true);
-		    		
-		    		
-		    		//MPA - contrib. from Mathieu Pasture
-					String[] protocols = sslContext.getSupportedSSLParameters().getProtocols();
-	                List<String> newProtocolList = new ArrayList<String>();
-	                for (String protocol : protocols) {
-	                    if( !protocol.equalsIgnoreCase("SSLv2Hello")){
-	                        newProtocolList.add( protocol );
-	                    }
-	                }
-	                String[] newProtocolArray = newProtocolList.toArray(new String[newProtocolList.size()]); 
-	                engine.setEnabledProtocols(newProtocolArray);
-	                
-		    		
-		    		
+		    		SecurityUtil.hardenSSLEngine(sslContext, engine);
 		            sslHandler = new SslHandler(engine);
 		        }
 				return sslHandler;

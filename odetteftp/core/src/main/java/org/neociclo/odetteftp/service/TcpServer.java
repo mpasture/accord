@@ -36,6 +36,7 @@ import org.neociclo.odetteftp.netty.OdetteFtpPipelineFactory;
 import org.neociclo.odetteftp.netty.SslHandlerFactory;
 import org.neociclo.odetteftp.oftplet.OftpletFactory;
 import org.neociclo.odetteftp.util.ExecutorUtil;
+import org.neociclo.odetteftp.util.SecurityUtil;
 
 /**
  * @author Rafael Marins
@@ -96,6 +97,8 @@ public class TcpServer extends Server {
 		        if (sslContext != null) {
 		        	SSLEngine engine = sslContext.createSSLEngine();
 		        	engine.setUseClientMode(false);
+		        	SecurityUtil.hardenSSLEngine(sslContext, engine);
+		        	
 		            if (startTls == null) {
 		                sslHandler = new SslHandler(engine);
 		            } else {
