@@ -28,12 +28,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -197,7 +197,7 @@ public class SecurityUtil {
     }
 
     public static void installBouncyCastleProviderIfNecessary() {
-        BouncyCastleProvider prov = (BouncyCastleProvider) Security.getProvider(BC_PROVIDER);
+        Provider prov = Security.getProvider(BC_PROVIDER);
         if (prov == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
@@ -250,28 +250,33 @@ public class SecurityUtil {
     }
     
 	public static void hardenSSLEngine(SSLContext sslContext, SSLEngine engine) {
-		String[] protocols = sslContext.getSupportedSSLParameters().getProtocols();
-		List<String> newProtocolList = new ArrayList<String>();
-		for (String protocol : protocols) {
-		    if( protocol.equalsIgnoreCase("TLSv1.1") || protocol.equalsIgnoreCase("TLSv1.2")){
-		        newProtocolList.add( protocol );
-		    }
-		}
-		String[] newProtocolArray = newProtocolList.toArray(new String[newProtocolList.size()]); 
-		engine.setEnabledProtocols(newProtocolArray);
-		
-		String[] unwantedCipherSuites = new String[] {"_dhe_", "_dh_anon", "_des", "_40", "_56", "_null_md5", "_null_sha" };
-		String[] ciphers = sslContext.getSupportedSSLParameters().getCipherSuites();
-		List<String> newCiphersList = new ArrayList<String>();
-		for (String cipher : ciphers) {
-			for (String ucs : unwantedCipherSuites) {
-				if (!cipher.toLowerCase().contains(ucs)) {
-					newCiphersList.add(cipher);
-				}
-			}
-		}
-		String[] newCipherArray = newCiphersList.toArray(new String[newCiphersList.size()]); 
-		engine.setEnabledCipherSuites(newCipherArray);
+//		String[] protocols = sslContext.getSupportedSSLParameters().getProtocols();
+//		List<String> newProtocolList = new ArrayList<String>();
+//		for (String protocol : protocols) {
+//		    if( protocol.equalsIgnoreCase("TLSv1.1") || protocol.equalsIgnoreCase("TLSv1.2")){
+//		        newProtocolList.add( protocol );
+//		    }
+//		}
+//		String[] newProtocolArray = newProtocolList.toArray(new String[newProtocolList.size()]); 
+//		engine.setEnabledProtocols(newProtocolArray);
+//				
+//		engine.setEnabledCipherSuites(new String[] {
+//				"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+//				"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+//				"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+//				"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+//				"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+//				"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",
+//				"TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA",
+//				"TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256",
+//				"TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384",
+//				"TLS_ECDH_RSA_WITH_AES_128_CBC_SHA",
+//				"TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256",
+//				"TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384",
+//				"TLS_RSA_WITH_AES_128_CBC_SHA",
+//				"TLS_RSA_WITH_AES_128_CBC_SHA256",
+//				"TLS_RSA_WITH_AES_256_CBC_SHA256"
+//				});
 	}
 
 }
