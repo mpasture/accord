@@ -48,7 +48,16 @@ public enum CipherSuite {
 
     TRIPLEDES_RSA_SHA1(1),
 
-    AES_RSA_SHA1(2);
+    AES_RSA_SHA1(2),
+
+    TRIPLEDES_RSA_SHA256(3),
+
+    AES_RSA_SHA256(4),
+
+    TRIPLEDES_RSA_SHA512(5),
+
+    AES_RSA_SHA512(6)
+    ;
 
 
     /**

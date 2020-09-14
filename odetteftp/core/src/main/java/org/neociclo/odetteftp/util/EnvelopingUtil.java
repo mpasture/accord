@@ -886,9 +886,9 @@ public class EnvelopingUtil {
     }
 
     public static String asEncryptionAlgorithm(CipherSuite cipherSuite) {
-        if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA1)
+        if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA1 || cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA256 || cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA512)
             return CMSEnvelopedGenerator.DES_EDE3_CBC;
-        else if (cipherSuite == CipherSuite.AES_RSA_SHA1)
+        else if (cipherSuite == CipherSuite.AES_RSA_SHA1 || cipherSuite == CipherSuite.AES_RSA_SHA256 || cipherSuite == CipherSuite.AES_RSA_SHA512)
             return CMSEnvelopedGenerator.AES256_CBC;
         else
             return null;
@@ -897,15 +897,19 @@ public class EnvelopingUtil {
     public static String asDigestAlgorithm(CipherSuite cs) {
         if (cs == CipherSuite.TRIPLEDES_RSA_SHA1 || cs == CipherSuite.AES_RSA_SHA1) {
             return CMSSignedGenerator.DIGEST_SHA1;
+        } else if (cs == CipherSuite.TRIPLEDES_RSA_SHA256 || cs == CipherSuite.AES_RSA_SHA256) {
+            return CMSSignedGenerator.DIGEST_SHA256;
+        } else if (cs == CipherSuite.TRIPLEDES_RSA_SHA512 || cs == CipherSuite.AES_RSA_SHA512) {
+            return CMSSignedGenerator.DIGEST_SHA512;
         } else {
             return null;
         }
     }
     
     public static ASN1ObjectIdentifier asCMSAlgorithm(CipherSuite cipherSuite) {
-        if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA1)
+        if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA1 || cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA256 || cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA512)
             return CMSAlgorithm.DES_EDE3_CBC;
-        else if (cipherSuite == CipherSuite.AES_RSA_SHA1)
+        else if (cipherSuite == CipherSuite.AES_RSA_SHA1 || cipherSuite == CipherSuite.AES_RSA_SHA256 || cipherSuite == CipherSuite.AES_RSA_SHA512)
             return CMSAlgorithm.AES256_CBC;
         else
             return null;
@@ -914,6 +918,10 @@ public class EnvelopingUtil {
     private static String asSignatureAlgorithm(CipherSuite cipherSuite) {
         if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA1 || cipherSuite == CipherSuite.AES_RSA_SHA1) {
             return "SHA1withRSA";
+        } else  if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA256 || cipherSuite == CipherSuite.AES_RSA_SHA256) {
+            return "SHA256withRSA";
+        } if (cipherSuite == CipherSuite.TRIPLEDES_RSA_SHA512 || cipherSuite == CipherSuite.AES_RSA_SHA512) {
+            return "SHA512withRSA";
         } else {
             return null;
         }
